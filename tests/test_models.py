@@ -53,7 +53,9 @@ class ModelTests(TestCase):
     def test_driver_str_representation(self):
         self.assertEqual(
             str(self.driver_testdummy),
-            f"{self.driver_testdummy.username} ({self.driver_testdummy.first_name} {self.driver_testdummy.last_name})"
+            f"{self.driver_testdummy.username} "
+            f"({self.driver_testdummy.first_name} "
+            f"{self.driver_testdummy.last_name})"
         )
 
     def test_car_str_representation(self):
@@ -75,5 +77,11 @@ class ModelTests(TestCase):
         self.assertTrue(driver.check_password(password))
 
     def test_get_absolute_url(self):
-        expected_url = reverse("taxi:driver-detail", kwargs={"pk": self.driver_testdummy.pk})
-        self.assertEqual(self.driver_testdummy.get_absolute_url(), expected_url)
+        expected_url = reverse(
+            "taxi:driver-detail",
+            kwargs={"pk": self.driver_testdummy.pk}
+        )
+        self.assertEqual(
+            self.driver_testdummy.get_absolute_url(),
+            expected_url
+        )

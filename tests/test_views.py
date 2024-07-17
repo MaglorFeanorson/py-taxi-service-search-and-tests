@@ -22,14 +22,21 @@ class PrivateManufacturerTest(TestCase):
             password="testpass123",
         )
         self.client.force_login(self.user)
-        self.manufacturer_bwd = Manufacturer.objects.create(name="BWD", country="Germany")
-        self.manufacturer_uaz = Manufacturer.objects.create(name="UAZ Factory", country="Muchosransk")
+        self.manufacturer_bwd = Manufacturer.objects.create(
+            name="BWD", country="Germany"
+        )
+        self.manufacturer_uaz = Manufacturer.objects.create(
+            name="UAZ Factory", country="Muchosransk"
+        )
 
     def test_retrieve_manufacturers(self):
         response = self.client.get(MANUFACTURER_LIST_URL)
         self.assertEqual(response.status_code, 200)
         manufacturers = Manufacturer.objects.all()
-        self.assertEqual(list(response.context["manufacturer_list"]), list(manufacturers))
+        self.assertEqual(
+            list(response.context["manufacturer_list"]),
+            list(manufacturers)
+        )
         self.assertTemplateUsed(response, "taxi/manufacturer_list.html")
 
     def test_search_manufacturer(self):
@@ -52,9 +59,18 @@ class PrivateCarTest(TestCase):
             password="testpass123",
         )
         self.client.force_login(self.user)
-        self.manufacturer_bwd = Manufacturer.objects.create(name="BWD", country="Germany")
-        self.car_panzer = Car.objects.create(model="Panzerhaubitze 2000", manufacturer=self.manufacturer_bwd)
-        self.car_uaz = Car.objects.create(model="UAZ", manufacturer=self.manufacturer_bwd)
+        self.manufacturer_bwd = Manufacturer.objects.create(
+            name="BWD",
+            country="Germany"
+        )
+        self.car_panzer = Car.objects.create(
+            model="Panzerhaubitze 2000",
+            manufacturer=self.manufacturer_bwd
+        )
+        self.car_uaz = Car.objects.create(
+            model="UAZ",
+            manufacturer=self.manufacturer_bwd
+        )
 
     def test_retrieve_cars(self):
         response = self.client.get(CAR_LIST_URL)
@@ -64,7 +80,10 @@ class PrivateCarTest(TestCase):
         self.assertTemplateUsed(response, "taxi/car_list.html")
 
     def test_search_car(self):
-        response = self.client.get(CAR_LIST_URL, {"model": "Panzerhaubitze 2000"})
+        response = self.client.get(
+            CAR_LIST_URL,
+            {"model": "Panzerhaubitze 2000"}
+        )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Panzerhaubitze 2000")
         self.assertNotContains(response, "UAZ")
