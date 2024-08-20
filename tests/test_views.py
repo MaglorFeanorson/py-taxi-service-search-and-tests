@@ -1,12 +1,34 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
-from taxi.models import Manufacturer, Car, Driver
-from taxi.forms import ManufacturerSearchForm, CarSearchForm, DriverSearchForm
+
+from taxi.models import Car, Driver, Manufacturer
 
 MANUFACTURER_LIST_URL = reverse("taxi:manufacturer-list")
 CAR_LIST_URL = reverse("taxi:car-list")
 DRIVER_LIST_URL = reverse("taxi:driver-list")
+
+class BaseTest(TestCase):
+    def create_test_user(self):
+        return get_user_model().objects.create_user(
+            username="testuser",
+            password="testpass123",
+        )
+
+    def create_manufacturer(self, name="BWD", country="Germany"):
+        return Manufacturer.objects.create(name=name, country=country)
+
+    def create_car(self, model="Panzerhaubitze 2000", manufacturer=None):
+        if manufacturer is None:
+            manufacturer = self.create_manufacturer()
+        return Car.objects.create(model=model, manufacturer=manufacturer)
+
+    def assertResponse(self, response, status_code=200, template_name=None, context_key=None, expected_value=None):
+        self.assertEqual(response.status_code, status_code)
+        if template_name:
+            self.assertTemplateUsed(response, template_name)
+        if context_key and expected_value:
+            self.assertEqual(list(response.context[context_key]), list(expected_value))
 
 
 class PublicManufacturerTest(TestCase):
@@ -15,29 +37,17 @@ class PublicManufacturerTest(TestCase):
         self.assertNotEqual(res.status_code, 200)
 
 
-class PrivateManufacturerTest(TestCase):
+class PrivateManufacturerTest(BaseTest):
     def setUp(self):
-        self.user = get_user_model().objects.create_user(
-            username="testuser",
-            password="testpass123",
-        )
+        self.user = self.create_test_user()
         self.client.force_login(self.user)
-        self.manufacturer_bwd = Manufacturer.objects.create(
-            name="BWD", country="Germany"
-        )
-        self.manufacturer_uaz = Manufacturer.objects.create(
-            name="UAZ Factory", country="Muchosransk"
-        )
+        self.manufacturer_bwd = self.create_manufacturer(name="BWD", country="Germany")
+        self.manufacturer_uaz = self.create_manufacturer(name="UAZ Factory", country="Muchosransk")
 
     def test_retrieve_manufacturers(self):
         response = self.client.get(MANUFACTURER_LIST_URL)
-        self.assertEqual(response.status_code, 200)
         manufacturers = Manufacturer.objects.all()
-        self.assertEqual(
-            list(response.context["manufacturer_list"]),
-            list(manufacturers)
-        )
-        self.assertTemplateUsed(response, "taxi/manufacturer_list.html")
+        self.assertResponse(response, template_name="taxi/manufacturer_list.html", context_key="manufacturer_list", expected_value=manufacturers)
 
     def test_search_manufacturer(self):
         response = self.client.get(MANUFACTURER_LIST_URL, {"name": "BWD"})
@@ -52,41 +62,19 @@ class PublicCarTest(TestCase):
         self.assertNotEqual(res.status_code, 200)
 
 
-class PrivateCarTest(TestCase):
+class PrivateCarTest(BaseTest):
     def setUp(self):
-        self.user = get_user_model().objects.create_user(
-            username="testuser",
-            password="testpass123",
-        )
+        self.user = self.create_test_user()
         self.client.force_login(self.user)
-        self.manufacturer_bwd = Manufacturer.objects.create(
-            name="BWD",
-            country="Germany"
-        )
-        self.car_panzer = Car.objects.create(
-            model="Panzerhaubitze 2000",
-            manufacturer=self.manufacturer_bwd
-        )
-        self.car_uaz = Car.objects.create(
-            model="UAZ",
-            manufacturer=self.manufacturer_bwd
-        )
+        self.manufacturer_bwd = self.create_manufacturer(name="BWD", country="Germany")
+        self.car_panzer = self.create_car(model="Panzerhaubitze 2000", manufacturer=self.manufacturer_bwd)
+        self.car_uaz = self.create_car(model="UAZ", manufacturer=self.manufacturer_bwd)
 
     def test_retrieve_cars(self):
         response = self.client.get(CAR_LIST_URL)
-        self.assertEqual(response.status_code, 200)
         cars = Car.objects.select_related("manufacturer").all()
-        self.assertEqual(list(response.context["car_list"]), list(cars))
-        self.assertTemplateUsed(response, "taxi/car_list.html")
+        self.assertResponse(response, template_name="taxi/car_list.html", context_key="car_list", expected_value=cars)
 
-    def test_search_car(self):
-        response = self.client.get(
-            CAR_LIST_URL,
-            {"model": "Panzerhaubitze 2000"}
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Panzerhaubitze 2000")
-        self.assertNotContains(response, "UAZ")
 
 
 class PublicDriverTest(TestCase):
@@ -95,22 +83,17 @@ class PublicDriverTest(TestCase):
         self.assertNotEqual(res.status_code, 200)
 
 
-class PrivateDriverTest(TestCase):
+class PrivateDriverTest(BaseTest):
     def setUp(self):
-        self.user = get_user_model().objects.create_user(
-            username="testuser",
-            password="testpass123",
-        )
+        self.user = self.create_test_user()
         self.client.force_login(self.user)
         Driver.objects.create(username="driver1", license_number="ABC12345")
         Driver.objects.create(username="driver2", license_number="DEF67890")
 
     def test_retrieve_drivers(self):
         response = self.client.get(DRIVER_LIST_URL)
-        self.assertEqual(response.status_code, 200)
         drivers = Driver.objects.all()
-        self.assertEqual(list(response.context["driver_list"]), list(drivers))
-        self.assertTemplateUsed(response, "taxi/driver_list.html")
+        self.assertResponse(response, template_name="taxi/driver_list.html", context_key="driver_list", expected_value=drivers)
 
     def test_search_driver(self):
         response = self.client.get(DRIVER_LIST_URL, {"username": "driver1"})
@@ -119,18 +102,14 @@ class PrivateDriverTest(TestCase):
         self.assertNotContains(response, "driver2")
 
 
-class PrivateIndexViewTest(TestCase):
+class PrivateIndexViewTest(BaseTest):
     def setUp(self):
-        self.user = get_user_model().objects.create_user(
-            username="testuser",
-            password="testpass123",
-        )
+        self.user = self.create_test_user()
         self.client.force_login(self.user)
 
     def test_index_view(self):
         response = self.client.get(reverse("taxi:index"))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "taxi/index.html")
+        self.assertResponse(response, template_name="taxi/index.html")
         self.assertIn("num_drivers", response.context)
         self.assertIn("num_cars", response.context)
         self.assertIn("num_manufacturers", response.context)

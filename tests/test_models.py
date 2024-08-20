@@ -1,7 +1,8 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
-from taxi.models import Manufacturer, Car
+
+from taxi.models import Car, Manufacturer
 
 
 class ModelTests(TestCase):

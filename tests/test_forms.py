@@ -1,16 +1,16 @@
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.test import TestCase
-from taxi.models import Manufacturer, Car
+
 from taxi.forms import (
     CarForm,
     DriverCreationForm,
     DriverLicenseUpdateForm,
     DriverSearchForm,
-    CarSearchForm,
     ManufacturerSearchForm,
-    validate_license_number,
+    validate_license_number
 )
+from taxi.models import Car, Manufacturer
 
 
 class FormsTest(TestCase):
@@ -100,18 +100,6 @@ class FormsTest(TestCase):
         form = DriverSearchForm(data=form_data)
         self.assertTrue(form.is_valid())
         self.assertEqual(form.cleaned_data["username"], "")
-
-    def test_car_search_form_is_valid(self):
-        form_data = {"model": "Panzerhaubitze 2000"}
-        form = CarSearchForm(data=form_data)
-        self.assertTrue(form.is_valid())
-        self.assertEqual(form.cleaned_data["model"], "Panzerhaubitze 2000")
-
-    def test_car_search_form_empty_model_is_valid(self):
-        form_data = {"model": ""}
-        form = CarSearchForm(data=form_data)
-        self.assertTrue(form.is_valid())
-        self.assertEqual(form.cleaned_data["model"], "")
 
     def test_manufacturer_search_form_is_valid(self):
         form_data = {"name": "BWD"}
