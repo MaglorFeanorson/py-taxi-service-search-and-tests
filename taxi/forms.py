@@ -65,7 +65,6 @@ class DriverSearchForm(forms.Form):
     )
 
 
-
 class ManufacturerSearchForm(forms.Form):
     name = forms.CharField(
         max_length=255,

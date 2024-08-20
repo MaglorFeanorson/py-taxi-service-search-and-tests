@@ -8,6 +8,7 @@ MANUFACTURER_LIST_URL = reverse("taxi:manufacturer-list")
 CAR_LIST_URL = reverse("taxi:car-list")
 DRIVER_LIST_URL = reverse("taxi:driver-list")
 
+
 class BaseTest(TestCase):
     def create_test_user(self):
         return get_user_model().objects.create_user(
@@ -23,12 +24,21 @@ class BaseTest(TestCase):
             manufacturer = self.create_manufacturer()
         return Car.objects.create(model=model, manufacturer=manufacturer)
 
-    def assertResponse(self, response, status_code=200, template_name=None, context_key=None, expected_value=None):
+    def assertresponse(
+            self,
+            response,
+            status_code=200,
+            template_name=None,
+            context_key=None,
+            expected_value=None
+    ):
         self.assertEqual(response.status_code, status_code)
         if template_name:
             self.assertTemplateUsed(response, template_name)
         if context_key and expected_value:
-            self.assertEqual(list(response.context[context_key]), list(expected_value))
+            self.assertEqual(
+                list(response.context[context_key]), list(expected_value)
+            )
 
 
 class PublicManufacturerTest(TestCase):
@@ -41,13 +51,22 @@ class PrivateManufacturerTest(BaseTest):
     def setUp(self):
         self.user = self.create_test_user()
         self.client.force_login(self.user)
-        self.manufacturer_bwd = self.create_manufacturer(name="BWD", country="Germany")
-        self.manufacturer_uaz = self.create_manufacturer(name="UAZ Factory", country="Muchosransk")
+        self.manufacturer_bwd = self.create_manufacturer(
+            name="BWD", country="Germany"
+        )
+        self.manufacturer_uaz = self.create_manufacturer(
+            name="UAZ Factory", country="Muchosransk"
+        )
 
     def test_retrieve_manufacturers(self):
         response = self.client.get(MANUFACTURER_LIST_URL)
         manufacturers = Manufacturer.objects.all()
-        self.assertResponse(response, template_name="taxi/manufacturer_list.html", context_key="manufacturer_list", expected_value=manufacturers)
+        self.assertresponse(
+            response,
+            template_name="taxi/manufacturer_list.html",
+            context_key="manufacturer_list",
+            expected_value=manufacturers
+        )
 
     def test_search_manufacturer(self):
         response = self.client.get(MANUFACTURER_LIST_URL, {"name": "BWD"})
@@ -66,15 +85,25 @@ class PrivateCarTest(BaseTest):
     def setUp(self):
         self.user = self.create_test_user()
         self.client.force_login(self.user)
-        self.manufacturer_bwd = self.create_manufacturer(name="BWD", country="Germany")
-        self.car_panzer = self.create_car(model="Panzerhaubitze 2000", manufacturer=self.manufacturer_bwd)
-        self.car_uaz = self.create_car(model="UAZ", manufacturer=self.manufacturer_bwd)
+        self.manufacturer_bwd = self.create_manufacturer(
+            name="BWD", country="Germany"
+        )
+        self.car_panzer = self.create_car(
+            model="Panzerhaubitze 2000", manufacturer=self.manufacturer_bwd
+        )
+        self.car_uaz = self.create_car(
+            model="UAZ", manufacturer=self.manufacturer_bwd
+        )
 
     def test_retrieve_cars(self):
         response = self.client.get(CAR_LIST_URL)
         cars = Car.objects.select_related("manufacturer").all()
-        self.assertResponse(response, template_name="taxi/car_list.html", context_key="car_list", expected_value=cars)
-
+        self.assertresponse(
+            response,
+            template_name="taxi/car_list.html",
+            context_key="car_list",
+            expected_value=cars
+        )
 
 
 class PublicDriverTest(TestCase):
@@ -93,7 +122,12 @@ class PrivateDriverTest(BaseTest):
     def test_retrieve_drivers(self):
         response = self.client.get(DRIVER_LIST_URL)
         drivers = Driver.objects.all()
-        self.assertResponse(response, template_name="taxi/driver_list.html", context_key="driver_list", expected_value=drivers)
+        self.assertresponse(
+            response,
+            template_name="taxi/driver_list.html",
+            context_key="driver_list",
+            expected_value=drivers
+        )
 
     def test_search_driver(self):
         response = self.client.get(DRIVER_LIST_URL, {"username": "driver1"})
@@ -109,7 +143,7 @@ class PrivateIndexViewTest(BaseTest):
 
     def test_index_view(self):
         response = self.client.get(reverse("taxi:index"))
-        self.assertResponse(response, template_name="taxi/index.html")
+        self.assertresponse(response, template_name="taxi/index.html")
         self.assertIn("num_drivers", response.context)
         self.assertIn("num_cars", response.context)
         self.assertIn("num_manufacturers", response.context)
